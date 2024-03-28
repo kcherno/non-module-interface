@@ -8,7 +8,7 @@ function filter
 
     sed -E '/^export[[:space:]]+module.*;$/d'                                 | \
 
-    sed -E 's:^export[[:space:]]+import[[:space:]]+(<.*>|".*")?:#include \1:' | \
+    sed -E 's:^export[[:space:]]+import[[:space:]]+(<.*>|".*")+:#include \1:' | \
 
     sed -E '/^export$/d'                                                      | \
 
@@ -25,11 +25,11 @@ function include
 	sed --in-place \
 	    '/.*/{H;$!d}
 	    ; x
-	    ; s:^:#ifndef __GUARD__\n#define __GUARD__:
-	    ; s:$:\n\n#endif // __GUARD__:' \
+	    ; s:^:#ifndef GUARD_NAME\n#define GUARD_NAME:
+	    ; s:$:\n\n#endif // GUARD_NAME:' \
 	    ${1}
 
-	sed --in-place "s:__GUARD__:${2}:" ${1}
+	sed --in-place "s:GUARD_NAME:${2}:" ${1}
 
     else
 	sed --in-place '/.*/{H;$!d} ; x ; s:^:#pragma once:' ${1}
@@ -39,9 +39,7 @@ function include
 
 INPUT=$1
 OUTPUT=$2
-GUARD=$3
+GUARD_NAME=$3
 
-cat ${INPUT} | filter > ${OUTPUT} &&     \
-    include ${OUTPUT} ${GUARD}    &&     \
-    grep --color=auto --line-number      \
-	 --initial-tab --regexp "^import" ${OUTPUT}
+cat ${INPUT} | filter > ${OUTPUT} && include ${OUTPUT} ${GUARD_NAME} && \
+    grep --color=auto --line-number --initial-tab --extended-regexp "^(export|import)" ${OUTPUT}
